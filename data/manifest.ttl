@@ -44,3 +44,7 @@
 	rdfs:seeAlso <tascam_comp_stereo.ttl> .
 
 
+<http://www.paraair.de/plugins/tascam_vol>
+	a lv2:Plugin ;
+	lv2:binary <libtascam.so>  ;
+	rdfs:seeAlso <tascam_vol.ttl> .

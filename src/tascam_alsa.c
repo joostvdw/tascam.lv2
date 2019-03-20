@@ -72,13 +72,25 @@ const char* comp_control_path[] = {
 	NULL
 };
 
+//* Volume control element names.
+const char* vol_control_path[] = {
+	"name='Line Volume',index=",
+	"name='Mute Switch',index=",
+	"name='Phase Switch',index=",
+	"name='Pan Left-Right Volume',index=",
+	"name='Line Out Route',index=",
+	NULL
+};
 
 
 //* static pointer to the EQ cache
 static channel_cache *eq_cache[16];
 
-//* static pointer to the EQ cache
+//* static pointer to the Compressor cache
 static channel_cache *comp_cache[16];
+
+//* static pointer to the Volumne cache
+static channel_cache *vol_cache[16];
 
 //* static array of integers to hold the input meter values.
 static int meters[35] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -128,6 +140,15 @@ void* doSomeThing(void *arg)
 				if (new_value != old_value) {
 					setInteger(hctl, comp_cache[i]->controls[j].name, new_value);
 					comp_cache[i]->controls[j].last_value = new_value;
+					continue;
+				}
+			}
+			for (j = 0; j < vol_cache[i]->num_controls; j++) {
+				int new_value = vol_cache[i]->controls[j].new_value;
+				int old_value = vol_cache[i]->controls[j].last_value;
+				if (new_value != old_value) {
+					setInteger(hctl, vol_cache[i]->controls[j].name, new_value);
+					vol_cache[i]->controls[j].last_value = new_value;
 					continue;
 				}
 			}
@@ -230,7 +251,7 @@ int open_device()
 			eq_cache[j]->channel = j;
 			i = 0;
 			while (eq_control_path[i]) {
-				name_size = strlen(eq_control_path[i] + 4);
+				name_size = strlen(eq_control_path[i]) + 4;
 				eq_cache[j]->controls[i].name = (char*) malloc(name_size);
 				get_ctrl_elem_name(eq_control_path[i], j, &(eq_cache[j]->controls[i].name), name_size);
 				eq_cache[j]->controls[i].last_value = eq_cache[j]->controls[i++].new_value = -1;
@@ -241,12 +262,23 @@ int open_device()
 			comp_cache[j]->channel = j;
 			i = 0;
 			while (comp_control_path[i]) {
-				name_size = strlen(eq_control_path[i] + 4);
+				name_size = strlen(comp_control_path[i]) + 4;
 				comp_cache[j]->controls[i].name = (char*) malloc(name_size);
 				get_ctrl_elem_name(comp_control_path[i], j, &(comp_cache[j]->controls[i].name), name_size);
 				comp_cache[j]->controls[i].last_value = comp_cache[j]->controls[i++].new_value = -1;
 			}
 			comp_cache[j]->num_controls = i;
+
+			vol_cache[j] = calloc(1, sizeof(channel_cache));
+			vol_cache[j]->channel = j;
+			i = 0;
+			while (vol_control_path[i]) {
+				name_size = strlen(vol_control_path[i]) + 4;
+				vol_cache[j]->controls[i].name = (char*) malloc(name_size);
+				get_ctrl_elem_name(vol_control_path[i], j, &(vol_cache[j]->controls[i].name), name_size);
+				vol_cache[j]->controls[i].last_value = vol_cache[j]->controls[i++].new_value = -1;
+			}
+			vol_cache[j]->num_controls = i;
 		}
 
 		snd_ctl_elem_value_alloca(&control_int);
@@ -267,6 +299,11 @@ channel_cache* get_eq_channel_cache(int channel_index)
 channel_cache* get_comp_channel_cache(int channel_index)
 {
 	return comp_cache[channel_index];
+}
+
+channel_cache* get_vol_channel_cache(int channel_index)
+{
+	return vol_cache[channel_index];
 }
 
 void close_device()
@@ -291,6 +328,18 @@ void close_device()
 				free(eq_cache[j]->controls[i++].name);
 			}
 			free(eq_cache[j]);
+
+			i = 0;
+			while (comp_control_path[i]) {
+				free(comp_cache[j]->controls[i++].name);
+			}
+			free(comp_cache[j]);
+
+			i = 0;
+			while (vol_control_path[i]) {
+				free(vol_cache[j]->controls[i++].name);
+			}
+			free(vol_cache[j]);						
 		}
 	}
 }
@@ -342,7 +391,7 @@ void setInteger(snd_hctl_t *hctl, const char* name, int value)
 		snd_ctl_elem_value_alloca(&control);
 		snd_ctl_elem_value_set_integer(control, 0, value);
 		if ((err = snd_hctl_elem_write(elem, control)) < 0) {
-			fprintf(stderr, "Control %s element read error: %s\n", name, snd_strerror(err));
+			//fprintf(stderr, "Control %s element write error: %s\n", name, snd_strerror(err));
 			return;
 		}
 	}

@@ -53,6 +53,13 @@ channel_cache* get_eq_channel_cache(int channel_index);
  */
 channel_cache* get_comp_channel_cache(int channel_index);
 
+/**
+ * Get the Volume channel cache which corresponds to a specific channel
+ * @param channel_index The index of the channel to be returned.
+ * @return A pointer to a structure of type eq_channel_cache.
+ */
+channel_cache* get_vol_channel_cache(int channel_index);
+
 // alsa device control functions
 int get_alsa_cardnum();
 int open_device();

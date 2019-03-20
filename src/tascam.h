@@ -24,6 +24,7 @@
 
 #include "tascam_eq.h"
 #include "tascam_comp.h"
+#include "tascam_vol.h"
 #include "tascam_alsa.h"
 
 

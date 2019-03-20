@@ -24,6 +24,7 @@
 #include "tascam_eq_stereo.h"
 #include "tascam_comp.h"
 #include "tascam_comp_stereo.h"
+#include "tascam_vol.h"
 
 LV2_SYMBOL_EXPORT
 const LV2_Descriptor*
@@ -38,6 +39,8 @@ lv2_descriptor(uint32_t index)
 		return &descriptor_comp;
 	case 3:  
 		return &descriptor_comp_stereo;
+	case 4:  
+		return &descriptor_vol;
 	default: 
 		return NULL;
 	}
